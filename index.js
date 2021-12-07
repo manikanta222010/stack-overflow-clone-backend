@@ -166,7 +166,7 @@ app.post("/reset-password/:id/:token", async (request, response) => {
         console.log(password)
         const payload = jwt.verify(token, secret)
         const x = await client.db("reset-password").collection("users").updateOne({ _id: ObjectId(id) }, { $set: password })
-        // user.password = password
+        
         const deleteToken = await client.db("reset-password").collection("users").updateOne({ _id: ObjectId(id) }, { $unset: { token: 1 } })
         response.send(x)
     }
