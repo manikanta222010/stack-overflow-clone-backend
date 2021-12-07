@@ -5,11 +5,13 @@ import { ObjectId } from "bson";
 import bcrypt from "bcrypt"
 import nodemailer from "nodemailer"
 import dotenv from "dotenv"
+import cors from "cors"
 
 dotenv.config()
 const app = express()
 const PORT = process.env.PORT
 
+app.use(cors())
 app.use(express.json())
 
 const JWT_SECRET = process.env.JWT_SECRET
@@ -47,14 +49,14 @@ app.post("/ask-question", async (request, response) => {
 
 app.post("/add-user", async (request, response) => {
     const data = request.body
-    const result = await client.db("reset-password").collection("users").insertOne(data)
+    const result = await client.db("stack-overflow").collection("users").insertOne(data)
     response.send(result)
 })
 
 app.post("/signup", async (request, response) => {
     const { username, password } = request.body
 
-    const userFormDB = await client.db("reset-password").collection("users").findOne({ username: username })
+    const userFormDB = await client.db("stack-overflow").collection("users").findOne({ username: username })
     if (userFormDB) {
         response.status(400).send({ message: "username already exists" })
         return
@@ -76,7 +78,7 @@ app.post("/login", async (request, response) => {
     const { username, password } = request.body
 
     //check for username
-    const userFormDB = await client.db("reset-password").collection("users").findOne({ username: username })
+    const userFormDB = await client.db("stack-overflow").collection("users").findOne({ username: username })
     if (!userFormDB) {
         response.status(401).send({ message: "Invalid credentials" })
         return
@@ -98,7 +100,7 @@ app.post("/login", async (request, response) => {
 app.post("/forgot-password", async (request, response) => {
     const { username } = request.body
 
-    const user = await client.db("reset-password").collection("users").findOne({ username: username })
+    const user = await client.db("stack-overflow").collection("users").findOne({ username: username })
     if (!user) {
         response.send("User not found")
         return
@@ -110,17 +112,17 @@ app.post("/forgot-password", async (request, response) => {
         id: user._id
     }
     const token = jwt.sign(payload, secret, { expiresIn: '15m' })
-    const link = `http://localhost:8000/reset-password/${user._id}/${token}`
+    const link = `/reset-password/${user._id}/${token}`
     console.log(link)
     sendLink(link, user.username)
-    const insertToken = await client.db("reset-password").collection("users").updateOne({ _id: ObjectId(user._id) }, { $set: { token } })
+    const insertToken = await client.db("stack-overflow").collection("users").updateOne({ _id: ObjectId(user._id) }, { $set: { token } })
     console.log({ token })
     response.send("link has been sent to ur email")
 })
 app.get("/reset-password/:id/:token", async (request, response) => {
     const { id, token } = request.params
     // response.send(request.params)
-    const user = await client.db("reset-password").collection("users").findOne({ token: token })
+    const user = await client.db("stack-overflow").collection("users").findOne({ token: token })
     if (!user) {
         response.send("Invalid id")
         return
@@ -140,7 +142,7 @@ app.post("/reset-password/:id/:token", async (request, response) => {
     const { id, token } = request.params
     const data = request.body
     let { password, password2 } = request.body
-    const user = await client.db("reset-password").collection("users").findOne({ _id: ObjectId(id) })
+    const user = await client.db("stack-overflow").collection("users").findOne({ _id: ObjectId(id) })
     if (!user) {
         response.send("Invalid id")
         return
@@ -165,9 +167,9 @@ app.post("/reset-password/:id/:token", async (request, response) => {
         password = await genPassword(password)
         console.log(password)
         const payload = jwt.verify(token, secret)
-        const x = await client.db("reset-password").collection("users").updateOne({ _id: ObjectId(id) }, { $set: password })
+        const x = await client.db("stack-overflow").collection("users").updateOne({ _id: ObjectId(id) }, { $set: password })
         
-        const deleteToken = await client.db("reset-password").collection("users").updateOne({ _id: ObjectId(id) }, { $unset: { token: 1 } })
+        const deleteToken = await client.db("stack-overflow").collection("users").updateOne({ _id: ObjectId(id) }, { $unset: { token: 1 } })
         response.send(x)
     }
     catch (error) {
