@@ -36,6 +36,10 @@ app.get("/companies", async (request, response) => {
     const companies = await client.db("stack-overflow").collection("companies").find({}).toArray()
     response.send(companies)
 })
+app.get("/questionsdata", async (request, response) => {
+    const questions = await client.db("stack-overflow").collection("questionsdata").find({}).toArray()
+    response.send(questions)
+})
 app.post("/companies", async (request, response) => {
     const data = request.body
     const companies = await client.db("stack-overflow").collection("companies").insertMany(data)
